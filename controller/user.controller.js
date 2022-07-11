@@ -6,26 +6,19 @@ const zilliqa = new Zilliqa.Zilliqa("https://dev-api.zilliqa.com/");
 // import ada from "js-chain-libs/js_chain_libs.js";
 const { toBech32Address } = Zilliqa;
 import hdkey_1 from "hdkey";
+import { accountCreated } from "../utils/common/createSuccess.js";
 
 export const createBySeed = async (req, res) => {
   try {
     const randomBytes = crypto.randomBytes(16);
     const mnemonic = bip39.entropyToMnemonic(randomBytes.toString("hex"));
     const mnemonic_to_array = mnemonic.split(" ");
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    const hdkey = hdkey_1.fromMasterSeed(seed);
-    const childKey = hdkey.derive("m/44'/313'/0'/0/" + 0);
-    const privateKey = childKey.privateKey.toString("hex");
-    const address = zilliqa.wallet.addByPrivateKey(private_key);
-    const bech32 = toBech32Address(address);
+    zilliqa.wallet.addByMnemonic(mnemonic);
+    const account = zilliqa.wallet.defaultAccount;
     res.status(201).json({
-      message: "Account created",
-      account: {
-        privateKey: privateKey,
-        address: address,
-        bech32: bech32,
-        mnemonic: mnemonic_to_array,
-      },
+      message: "Account Created",
+      account: accountCreated(account),
+      mnemonic: mnemonic_to_array,
     });
   } catch (error) {
     console.log(error);
@@ -36,13 +29,10 @@ export const createBySeed = async (req, res) => {
 export const createByPrivateKey = async (req, res) => {
   try {
     const privateKey = Zilliqa.schnorr.generatePrivateKey();
-    const address = zilliqa.wallet.addByPrivateKey(privateKey);
-    const bech32 = toBech32Address(address);
+    zilliqa.wallet.addByPrivateKey(privateKey);
     res.status(201).json({
       message: "Account created",
-      privateKey: privateKey,
-      address: address,
-      bech32: bech32,
+      account: accountCreated(zilliqa.wallet.defaultAccount),
     });
   } catch (error) {
     console.log(error);
